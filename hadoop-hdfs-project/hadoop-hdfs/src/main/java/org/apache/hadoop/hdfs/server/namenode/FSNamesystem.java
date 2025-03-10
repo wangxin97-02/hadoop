@@ -693,6 +693,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   private final Object metaSaveLock = new Object();
 
   private final MessageDigest digest;
+  private volatile int imageUploadTimeoutMillSec;
 
   /**
    * Notify that loading of this FSDirectory is complete, and
@@ -1078,7 +1079,14 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       this.isGetBlocksCheckOperationEnabled = conf.getBoolean(
           DFSConfigKeys.DFS_NAMENODE_GETBLOCKS_CHECK_OPERATION_KEY,
           DFSConfigKeys.DFS_NAMENODE_GETBLOCKS_CHECK_OPERATION_DEFAULT);
-
+      this.imageUploadTimeoutMillSec = conf.getInt(
+          DFSConfigKeys.DFS_NAMENODE_IMAGE_UPLOAD_TIMEOUT_MS_KEY,
+          DFSConfigKeys.DFS_NAMENODE_IMAGE_UPLOAD_TIMEOUT_MS_DEFAULT);
+      if(this.imageUploadTimeoutMillSec <= 0) {
+        throw new IllegalArgumentException(
+            DFSConfigKeys.DFS_NAMENODE_IMAGE_UPLOAD_TIMEOUT_MS_KEY +
+                    " must be greater than zero.");
+      }
     } catch(IOException e) {
       LOG.error(getClass().getSimpleName() + " initialization failed.", e);
       close();
@@ -9242,5 +9250,13 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
   @VisibleForTesting
   public long getWriteLockReportingThresholdMs() {
     return this.fsLock.getWriteLockReportingThresholdMs();
+  }
+
+  public int getImageUploadTimeoutMillSec() {
+    return imageUploadTimeoutMillSec;
+  }
+
+  public void setImageUploadTimeoutMillSec(int imageUploadTimeoutMillSec) {
+    this.imageUploadTimeoutMillSec = imageUploadTimeoutMillSec;
   }
 }

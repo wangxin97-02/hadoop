@@ -2101,4 +2101,8 @@ public class DFSConfigKeys extends CommonConfigurationKeys {
   public static final long DFS_LEASE_HARDLIMIT_DEFAULT =
       HdfsClientConfigKeys.DFS_LEASE_HARDLIMIT_DEFAULT;
 
+  public static final String DFS_NAMENODE_IMAGE_UPLOAD_TIMEOUT_MS_KEY =
+          "dfs.namenode.image.upload.timeout.ms.key";
+  public static final int DFS_NAMENODE_IMAGE_UPLOAD_TIMEOUT_MS_DEFAULT =
+          2 * 60 * 60 * 1000;
 }

@@ -93,6 +93,8 @@ public class NameNodeMetrics {
   MutableGaugeInt deleteBlocksQueued;
   @Metric("Number of pending deletion blocks")
   MutableGaugeInt pendingDeleteBlocksCount;
+  @Metric("Number of cancel upload FSImage operations")
+  MutableCounterLong cancelUploadFSImageOps;
 
   @Metric("Number of file system operations")
   public long totalFileOps(){
@@ -480,5 +482,9 @@ public class NameNodeMetrics {
     for (MutableQuantiles q : editLogTailIntervalQuantiles) {
       q.add(elapsed);
     }
+  }
+
+  public void incCancelUploadFSImageOps() {
+    cancelUploadFSImageOps.incr();
   }
 }

@@ -42,6 +42,7 @@ import org.apache.hadoop.hdfs.server.namenode.NNStorage.NameNodeFile;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
 import org.apache.hadoop.hdfs.server.namenode.SaveNamespaceCancelledException;
 import org.apache.hadoop.hdfs.server.namenode.TransferFsImage;
+import org.apache.hadoop.hdfs.server.namenode.metrics.NameNodeMetrics;
 import org.apache.hadoop.hdfs.util.Canceler;
 import org.apache.hadoop.io.MultipleIOException;
 import org.apache.hadoop.security.SecurityUtil;
@@ -244,6 +245,8 @@ public class StandbyCheckpointer {
       namesystem.cpUnlock();
     }
 
+    NameNodeMetrics nameNodeMetrics = NameNode.getNameNodeMetrics();
+
     // Upload the saved checkpoint back to the active
     // Do this in a separate thread to avoid blocking transition to active, but don't allow more
     // than the expected number of tasks to run or queue up
@@ -293,7 +296,8 @@ public class StandbyCheckpointer {
         // TODO should there be some smarts here about retries nodes that
         //  are not the active NN?
         CheckpointReceiverEntry receiverEntry = checkpointReceivers.get(url);
-        TransferFsImage.TransferResult uploadResult = upload.get();
+        TransferFsImage.TransferResult uploadResult = upload.get(namesystem.getImageUploadTimeoutMillSec(),
+                TimeUnit.MILLISECONDS);
         if (uploadResult == TransferFsImage.TransferResult.SUCCESS) {
           receiverEntry.setLastUploadTime(monotonicNow());
           receiverEntry.setIsPrimary(true);
@@ -317,6 +321,12 @@ public class StandbyCheckpointer {
       } catch (InterruptedException e) {
         ie = e;
         break;
+      } catch (TimeoutException e) {
+        upload.cancel(true);
+        if (nameNodeMetrics != null) {
+          nameNodeMetrics.incCancelUploadFSImageOps();
+        }
+        ioes.add(new IOException("TimeoutException during image upload", e));
       }
     }
     // cleaner than copying code for multiple catch statements and better than catching all

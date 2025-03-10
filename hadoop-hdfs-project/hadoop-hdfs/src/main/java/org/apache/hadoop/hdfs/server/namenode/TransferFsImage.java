@@ -379,7 +379,7 @@ public class TransferFsImage {
         // and the rest of the image will be sent over the wire
         infile.read(buf);
       }
-      while (num > 0) {
+      while (num > 0 && !Thread.currentThread().isInterrupted()) {
         if (canceler != null && canceler.isCancelled()) {
           throw new SaveNamespaceCancelledException(
             canceler.getCancellationReason());

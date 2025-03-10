@@ -226,6 +226,8 @@ import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_DECOMMISSION_BAC
 import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_DECOMMISSION_BACKOFF_MONITOR_PENDING_LIMIT_DEFAULT;
 import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_DECOMMISSION_BACKOFF_MONITOR_PENDING_BLOCKS_PER_LOCK;
 import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_DECOMMISSION_BACKOFF_MONITOR_PENDING_BLOCKS_PER_LOCK_DEFAULT;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_IMAGE_UPLOAD_TIMEOUT_MS_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_IMAGE_UPLOAD_TIMEOUT_MS_DEFAULT;
 
 import static org.apache.hadoop.util.ExitUtil.terminate;
 import static org.apache.hadoop.util.ToolRunner.confirmPrompt;
@@ -2387,6 +2389,8 @@ public class NameNode extends ReconfigurableBase implements
         || property.equals(DFS_NAMENODE_READ_LOCK_REPORTING_THRESHOLD_MS_KEY)
         || property.equals(DFS_NAMENODE_WRITE_LOCK_REPORTING_THRESHOLD_MS_KEY)) {
       return reconfigureFSNamesystemLockMetricsParameters(property, newVal);
+    } else if (property.equals(DFS_NAMENODE_IMAGE_UPLOAD_TIMEOUT_MS_KEY)) {
+      return reconfImageUploadTimeout(newVal);
     } else {
       throw new ReconfigurationException(property, newVal, getConf().get(
           property));
@@ -2442,6 +2446,16 @@ public class NameNode extends ReconfigurableBase implements
   private void reconfBlockPlacementPolicy() {
     getNamesystem().getBlockManager()
         .refreshBlockPlacementPolicy(getNewConf());
+  }
+
+  private String reconfImageUploadTimeout(String newVal) {
+    if (newVal == null) {
+      getNamesystem().setImageUploadTimeoutMillSec(DFS_NAMENODE_IMAGE_UPLOAD_TIMEOUT_MS_DEFAULT);
+      return String.valueOf(DFS_NAMENODE_IMAGE_UPLOAD_TIMEOUT_MS_DEFAULT);
+    } else {
+      getNamesystem().setImageUploadTimeoutMillSec(Integer.parseInt(newVal));
+      return newVal;
+    }
   }
 
   private int adjustNewVal(int defaultVal, String newVal) {
